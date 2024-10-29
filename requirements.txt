@@ -1,0 +1,6 @@
+streamlit
+langchain-cohere
+cohere
+requests
+beautifulsoup4
+python-dotenv
