@@ -79,8 +79,8 @@ if st.button("Summarize"):
             st.session_state["summary"] = summary
             
             # Display the summary
-            st.subheader("Summary:")
-            st.write(st.session_state["summary"])
+            # st.subheader("Summary:")
+            # st.write(st.session_state["summary"])
         else:
             st.error("No content extracted from the provided URL.")
     else:
