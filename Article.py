@@ -2,8 +2,7 @@ import os
 import streamlit as st
 from langchain_cohere.chat_models import ChatCohere
 from langchain.prompts import PromptTemplate
-from bs4 import BeautifulSoup, Comment
-import requests
+from goose3 import Goose
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -12,32 +11,11 @@ load_dotenv()
 # Initialize the Summarization Model (Cohere)
 summarization_model = ChatCohere(cohere_api_key=os.getenv("COHERE_API_KEY"), model="command-r-plus", temperature=0.5)
 
-# Function to check if a tag is visible
-def tag_visible(element):
-    if element.parent.name in ['style', 'script', 'head', 'title', 'meta', '[document]']:
-        return False
-    if isinstance(element, Comment):
-        return False
-    return True
-
-# Extracts useful content from a webpage
-def extract_useful_content(url):
-    try:
-        response = requests.get(url)
-        response.raise_for_status()
-        
-        soup = BeautifulSoup(response.content, 'html.parser')
-        elements = soup.find_all(['p', 'div', 'article', 'section'])
-        visible_texts = filter(tag_visible, elements)
-        
-        content_parts = [element.get_text(separator=' ').strip() for element in visible_texts if element.get_text(strip=True)]
-        main_content = ' '.join(content_parts).strip()
-        
-        return main_content if main_content else None
-    
-    except requests.exceptions.RequestException as e:
-        st.error(f"An error occurred: {e}")
-        return None
+# Extracts useful content from a webpage using Goose
+def scrape_article(url):
+    g = Goose()
+    article = g.extract(url=url)
+    return article.cleaned_text if article else None
 
 # Summarizes the webpage content using the model
 def summarize_content(content):
@@ -67,20 +45,21 @@ if "summary" not in st.session_state:
 # Button to Summarize
 if st.button("Summarize"):
     if url_input:
-        # Extract content
-        raw_content = extract_useful_content(url_input)
+        with st.spinner("Extracting content..."):
+            # Extract content using Goose
+            raw_content = scrape_article(url_input)
         
         if raw_content:
-            # Summarize the content
-            st.write("Summarizing content...")
-            summary = summarize_content(raw_content)
-            
-            # Store the summary in session state
-            st.session_state["summary"] = summary
-            
-            # Display the summary
-            # st.subheader("Summary:")
-            # st.write(st.session_state["summary"])
+            with st.spinner("Summarizing content..."):
+                # Summarize the content
+                summary = summarize_content(raw_content)
+                
+                # Store the summary in session state
+                st.session_state["summary"] = summary
+                
+                # Display the summary
+                # st.subheader("Summary:")
+                # st.write(st.session_state["summary"])
         else:
             st.error("No content extracted from the provided URL.")
     else:
@@ -98,12 +77,12 @@ if st.session_state["summary"]:
     # Button to Answer the Question
     if st.button("Get Answer"):
         if question_input:
-            # Answer the question based on the summary
-            st.write("Answering your question...")
-            answer = get_answer(st.session_state["summary"], question_input)
-            
-            # Display the answer
-            st.subheader("Answer:")
-            st.write(answer)
+            with st.spinner("Answering your question..."):
+                # Answer the question based on the summary
+                answer = get_answer(st.session_state["summary"], question_input)
+                
+                # Display the answer
+                st.subheader("Answer:")
+                st.write(answer)
         else:
             st.warning("Please enter a question to get an answer.")
