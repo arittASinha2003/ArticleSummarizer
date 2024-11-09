@@ -32,7 +32,7 @@ To run this project locally, you need the following tools and libraries:
 ### 1. Clone the Repository
 ```bash
 git clone https://github.com/arittASinha2003/ArticleSummarizer.git
-cd article-summarizer
+cd ArticleSummarizer
 ```
 
 ### 2. Install Dependencies
